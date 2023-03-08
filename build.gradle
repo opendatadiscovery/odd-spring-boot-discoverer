@@ -1,0 +1,94 @@
+plugins {
+    id 'java'
+    id 'maven-publish'
+    id 'org.springframework.boot' version '2.6.7'
+    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+    id 'io.github.gradle-nexus.publish-plugin' version '1.1.0'
+    id 'signing'
+}
+
+ext {
+    env = findProperty('env') ?: 'dev'
+}
+
+group 'org.opendatadiscovery'
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
+dependencies {
+    implementation "org.opendatadiscovery:oddrn-generator-java:0.1.17"
+    implementation "org.opendatadiscovery:ingestion-contract-client-native:0.1.23"
+    compileOnly 'org.springframework.boot:spring-boot-autoconfigure'
+    compileOnly 'org.springframework.kafka:spring-kafka:3.0.4'
+}
+
+if (env == 'prod') {
+    signing {
+        sign(publishing.publications)
+    }
+}
+
+publishing {
+    if (env == 'prod') {
+        repositories {
+            maven {
+                url "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2"
+                credentials {
+                    username sonatypeUsername
+                    password sonatypePassword
+                }
+            }
+        }
+    }
+
+    publications {
+        maven(MavenPublication) {
+            groupId = group
+            version = file('VERSION').text
+
+            from components.java
+
+            pom {
+                url = 'https://github.com/opendatadiscovery/smth'
+
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id = 'ndementev'
+                        name = 'Nikita Dementev'
+                        organization = 'opendatadiscovery.org'
+                    }
+                }
+
+                scm {
+                    connection = 'scm:git:git://github.com/opendatadiscovery/smth.git'
+                    developerConnection = 'scm:git:git://github.com/opendatadiscovery/smth.git'
+                    url = 'https://github.com/opendatadiscovery/smth'
+                }
+            }
+        }
+    }
+}
+
+nexusPublishing {
+    repositories {
+        sonatype {
+            nexusUrl = uri("https://s01.oss.sonatype.org/service/local/")
+            snapshotRepositoryUrl = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
+
+            username = sonatypeUsername
+            password = sonatypePassword
+        }
+    }
+}
+
+publish.dependsOn tasks.compileJava
