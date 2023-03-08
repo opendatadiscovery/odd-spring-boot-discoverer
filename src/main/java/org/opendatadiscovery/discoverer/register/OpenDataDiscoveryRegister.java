@@ -96,7 +96,7 @@ public class OpenDataDiscoveryRegister implements ApplicationListener<ContextRef
             .filter(p -> p.type().equals(type))
             .flatMap(p -> p.discover().stream())
             .map(OddrnPath::oddrn)
-            .toList();
+            .collect(Collectors.toList());
     }
 
     private boolean validateProperties(final ODDDiscovererProperties oddProperties) {

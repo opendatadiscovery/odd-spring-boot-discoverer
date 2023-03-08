@@ -22,7 +22,7 @@ dependencies {
     implementation "org.opendatadiscovery:oddrn-generator-java:0.1.17"
     implementation "org.opendatadiscovery:ingestion-contract-client-native:0.1.23"
     compileOnly 'org.springframework.boot:spring-boot-autoconfigure'
-    compileOnly 'org.springframework.kafka:spring-kafka:3.0.4'
+    compileOnly 'org.springframework.kafka:spring-kafka'
 }
 
 if (env == 'prod') {
