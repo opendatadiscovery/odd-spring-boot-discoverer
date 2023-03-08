@@ -75,8 +75,10 @@ public class OpenDataDiscoveryRegister implements ApplicationListener<ContextRef
             .items(Collections.singletonList(dataEntity))
             .dataSourceOddrn(oddProperties.getDataSourceOddrn());
 
+        LOG.debug("Payload to send: " + dataEntityList);
+
         final ApiClient apiClient = new ApiClient();
-        apiClient.updateBaseUri(oddProperties.getOddPlatformHost());
+        apiClient.updateBaseUri(oddProperties.getUrl());
 
         final OpenDataDiscoveryIngestionApi client = new OpenDataDiscoveryIngestionApi(apiClient);
         try {
@@ -85,7 +87,7 @@ public class OpenDataDiscoveryRegister implements ApplicationListener<ContextRef
                 LOG.warn("ODD Platform responded with code: " + response.getStatusCode());
                 return;
             }
-            LOG.info("Payload has been successfully sent to the ODD Platform: " + oddProperties.getOddPlatformHost());
+            LOG.info("Payload has been successfully sent to the ODD Platform: " + oddProperties.getUrl());
         } catch (final ApiException e) {
             LOG.error("Couldn't send payload to the ODD Platform", e);
         }
@@ -100,7 +102,7 @@ public class OpenDataDiscoveryRegister implements ApplicationListener<ContextRef
     }
 
     private boolean validateProperties(final ODDDiscovererProperties oddProperties) {
-        if (!validateUrl(oddProperties.getOddPlatformHost())) {
+        if (!validateUrl(oddProperties.getUrl())) {
             LOG.error("ODD Platform URL hasn't been defined");
             return false;
         }

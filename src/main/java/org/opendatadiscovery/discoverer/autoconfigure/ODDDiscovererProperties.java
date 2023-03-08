@@ -2,10 +2,10 @@ package org.opendatadiscovery.discoverer.autoconfigure;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-@ConfigurationProperties(prefix = "opendatadiscovery.discoverer")
+@ConfigurationProperties(prefix = "opendatadiscovery")
 public class ODDDiscovererProperties {
     private boolean enabled;
-    private String oddPlatformHost;
+    private String url;
     private String dataSourceOddrn;
     private String environment;
 
@@ -17,12 +17,12 @@ public class ODDDiscovererProperties {
         this.enabled = enabled;
     }
 
-    public String getOddPlatformHost() {
-        return oddPlatformHost;
+    public String getUrl() {
+        return url;
     }
 
-    public void setOddPlatformHost(final String oddPlatformHost) {
-        this.oddPlatformHost = oddPlatformHost;
+    public void setUrl(final String url) {
+        this.url = url;
     }
 
     public String getDataSourceOddrn() {

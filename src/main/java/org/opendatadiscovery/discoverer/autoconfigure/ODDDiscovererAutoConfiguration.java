@@ -22,7 +22,7 @@ import java.util.List;
 
 @Configuration
 @EnableConfigurationProperties(ODDDiscovererProperties.class)
-@ConditionalOnProperty(value = "opendatadiscovery.discoverer.enabled", havingValue = "true")
+@ConditionalOnProperty(value = "opendatadiscovery.enabled", havingValue = "true")
 public class ODDDiscovererAutoConfiguration {
     @Bean
     public OpenDataDiscoveryRegister register(
