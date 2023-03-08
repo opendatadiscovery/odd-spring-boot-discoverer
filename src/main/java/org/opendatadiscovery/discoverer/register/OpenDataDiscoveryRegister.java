@@ -4,6 +4,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.opendatadiscovery.client.ApiClient;
 import org.opendatadiscovery.client.ApiException;
+import org.opendatadiscovery.client.ApiResponse;
 import org.opendatadiscovery.client.api.OpenDataDiscoveryIngestionApi;
 import org.opendatadiscovery.client.model.DataEntity;
 import org.opendatadiscovery.client.model.DataEntityList;
@@ -55,17 +56,6 @@ public class OpenDataDiscoveryRegister implements ApplicationListener<ContextRef
             .flatMap(d -> d.metadata().entrySet().stream())
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (v1, v2) -> v1));
 
-//        final Map<String, Object> metadata = metadataDiscoverers.stream()
-//            .flatMap(d -> d.metadata().entrySet().stream())
-//            .collect(Collectors.groupingBy(Map.Entry::getKey, Collectors.mapping(
-//                Map.Entry::getValue,
-//                Collectors.reducing((v1, v2) -> v1))
-//            ))
-//            .entrySet()
-//            .stream()
-//            .filter(e -> e.getValue().isPresent())
-//            .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().get()));
-
         final DataEntity dataEntity = new DataEntity()
             .metadata(Collections.singletonList(new MetadataExtension().metadata(metadata)))
             .oddrn(NamedMicroservicePath.builder()
@@ -90,8 +80,14 @@ public class OpenDataDiscoveryRegister implements ApplicationListener<ContextRef
 
         final OpenDataDiscoveryIngestionApi client = new OpenDataDiscoveryIngestionApi(apiClient);
         try {
-            client.postDataEntityList(dataEntityList);
-        } catch (final ApiException ignored) {
+            final ApiResponse<Void> response = client.postDataEntityListWithHttpInfo(dataEntityList);
+            if (response.getStatusCode() != 200) {
+                LOG.warn("ODD Platform responded with code: " + response.getStatusCode());
+                return;
+            }
+            LOG.info("Payload has been successfully sent to the ODD Platform: " + oddProperties.getOddPlatformHost());
+        } catch (final ApiException e) {
+            LOG.error("Couldn't send payload to the ODD Platform", e);
         }
     }
 
