@@ -39,7 +39,7 @@ jobs:
           -Psigning.password="${{ secrets.SIGNING_PASSWORD }}"
           -Psigning.secretKeyRingFile=/tmp/secret_key.gpg
           -Penv=prod
-          clean publishToSonatype
+          clean publishToSonatype closeAndReleaseSonatypeStagingRepository
 
       - name: Update repository with up-to-date submodules and version
         run: |
