@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id 'java-library'
     id 'maven-publish'
     id 'org.springframework.boot' version '2.6.7'
     id 'io.spring.dependency-management' version '1.0.11.RELEASE'
@@ -19,7 +20,7 @@ repositories {
 }
 
 dependencies {
-    implementation "org.opendatadiscovery:oddrn-generator-java:0.1.17"
+    api "org.opendatadiscovery:oddrn-generator-java:0.1.17"
     implementation "org.opendatadiscovery:ingestion-contract-client-native:0.1.23"
     compileOnly 'org.springframework.boot:spring-boot-autoconfigure'
     compileOnly 'org.springframework.kafka:spring-kafka'
