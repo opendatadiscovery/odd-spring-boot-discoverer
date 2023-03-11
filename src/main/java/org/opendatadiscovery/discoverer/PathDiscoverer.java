@@ -1,15 +1,7 @@
 package org.opendatadiscovery.discoverer;
 
-import org.opendatadiscovery.oddrn.model.OddrnPath;
-
-import java.util.List;
+import org.opendatadiscovery.discoverer.model.Paths;
 
 public interface PathDiscoverer {
-    List<? extends OddrnPath> discover();
-
-    DiscoveryType type();
-
-    enum DiscoveryType {
-        INPUT, OUTPUT
-    }
+    Paths discover();
 }

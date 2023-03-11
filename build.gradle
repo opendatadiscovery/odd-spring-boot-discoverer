@@ -24,6 +24,7 @@ dependencies {
     implementation "org.opendatadiscovery:ingestion-contract-client-native:0.1.23"
     compileOnly 'org.springframework.boot:spring-boot-autoconfigure'
     compileOnly 'org.springframework.kafka:spring-kafka'
+    compileOnly 'org.apache.kafka:kafka-streams'
 }
 
 if (env == 'prod') {

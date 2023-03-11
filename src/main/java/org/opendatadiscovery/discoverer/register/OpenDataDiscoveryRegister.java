@@ -14,6 +14,7 @@ import org.opendatadiscovery.client.model.MetadataExtension;
 import org.opendatadiscovery.discoverer.MetadataDiscoverer;
 import org.opendatadiscovery.discoverer.PathDiscoverer;
 import org.opendatadiscovery.discoverer.autoconfigure.ODDDiscovererProperties;
+import org.opendatadiscovery.discoverer.model.Paths;
 import org.opendatadiscovery.oddrn.model.NamedMicroservicePath;
 import org.opendatadiscovery.oddrn.model.OddrnPath;
 import org.springframework.context.ApplicationContext;
@@ -22,6 +23,7 @@ import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.util.StringUtils;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -56,6 +58,8 @@ public class OpenDataDiscoveryRegister implements ApplicationListener<ContextRef
             .flatMap(d -> d.metadata().entrySet().stream())
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (v1, v2) -> v1));
 
+        final Paths paths = extractPaths();
+
         final DataEntity dataEntity = new DataEntity()
             .metadata(Collections.singletonList(new MetadataExtension().metadata(metadata)))
             .oddrn(NamedMicroservicePath.builder()
@@ -67,8 +71,8 @@ public class OpenDataDiscoveryRegister implements ApplicationListener<ContextRef
             .name(context.getId())
             .dataTransformer(
                 new DataTransformer()
-                    .inputs(paths(PathDiscoverer.DiscoveryType.INPUT))
-                    .outputs(paths(PathDiscoverer.DiscoveryType.OUTPUT))
+                    .inputs(paths.getInputs().stream().map(OddrnPath::oddrn).collect(Collectors.toList()))
+                    .outputs(paths.getOutputs().stream().map(OddrnPath::oddrn).collect(Collectors.toList()))
             );
 
         final DataEntityList dataEntityList = new DataEntityList()
@@ -93,12 +97,17 @@ public class OpenDataDiscoveryRegister implements ApplicationListener<ContextRef
         }
     }
 
-    private List<String> paths(PathDiscoverer.DiscoveryType type) {
-        return pathDiscoverers.stream()
-            .filter(p -> p.type().equals(type))
-            .flatMap(p -> p.discover().stream())
-            .map(OddrnPath::oddrn)
-            .collect(Collectors.toList());
+    private Paths extractPaths() {
+        final List<Paths> paths = new ArrayList<>();
+        for (final PathDiscoverer pathDiscoverer : pathDiscoverers) {
+            try {
+                paths.add(pathDiscoverer.discover());
+            } catch (final Throwable t) {
+                LOG.error(String.format("Couldn't extract paths using %s", pathDiscoverer.getClass().getName()), t);
+            }
+        }
+
+        return Paths.merge(paths);
     }
 
     private boolean validateProperties(final ODDDiscovererProperties oddProperties) {

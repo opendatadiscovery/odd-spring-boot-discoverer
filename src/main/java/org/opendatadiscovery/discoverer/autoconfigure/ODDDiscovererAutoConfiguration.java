@@ -1,10 +1,12 @@
 package org.opendatadiscovery.discoverer.autoconfigure;
 
+import org.apache.kafka.streams.StreamsBuilder;
 import org.opendatadiscovery.discoverer.MetadataDiscoverer;
 import org.opendatadiscovery.discoverer.PathDiscoverer;
 import org.opendatadiscovery.discoverer.impl.BuildInfoDiscoverer;
 import org.opendatadiscovery.discoverer.impl.GitInfoDiscoverer;
 import org.opendatadiscovery.discoverer.impl.KafkaListenerDiscoverer;
+import org.opendatadiscovery.discoverer.impl.KafkaStreamsDiscoverer;
 import org.opendatadiscovery.discoverer.register.OpenDataDiscoveryRegister;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -17,6 +19,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
+import org.springframework.kafka.config.StreamsBuilderFactoryBean;
 
 import java.util.List;
 
@@ -53,6 +56,15 @@ public class ODDDiscovererAutoConfiguration {
         public PathDiscoverer kafka(final KafkaProperties kafkaProperties,
                                     final KafkaListenerEndpointRegistry kafkaListenerEndpointRegistry) {
             return new KafkaListenerDiscoverer(kafkaProperties, kafkaListenerEndpointRegistry);
+        }
+    }
+
+    @ConditionalOnBean(StreamsBuilderFactoryBean.class)
+    @ConditionalOnClass(StreamsBuilder.class)
+    static class KafkaStreamsDiscovererConfiguration {
+        @Bean
+        public PathDiscoverer kafkaStreams(final List<StreamsBuilderFactoryBean> builderFactoryBeans) {
+            return new KafkaStreamsDiscoverer(builderFactoryBeans);
         }
     }
 }
