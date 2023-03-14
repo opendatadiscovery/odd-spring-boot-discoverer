@@ -1,5 +1,6 @@
 package org.opendatadiscovery.discoverer.impl;
 
+import java.util.Arrays;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.kafka.streams.StreamsConfig;
@@ -48,8 +49,19 @@ public class KafkaStreamsDiscoverer implements PathDiscoverer {
 
             final TopologyDescription topologyDescription = topology.describe();
 
-            final String cluster = factoryBean.getStreamsConfiguration()
-                .getProperty(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG);
+            final Object clusterConfig = factoryBean.getStreamsConfiguration()
+                .get(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG);
+
+            final List<String> bootstrapServers = clusterConfig instanceof String ?
+                Arrays.asList(((String) clusterConfig).split(",")) :
+                    clusterConfig instanceof List<?> ? (List<String>) clusterConfig : List.of();
+
+            final String cluster = bootstrapServers.stream()
+                .map(s -> s.replaceFirst("PLAINTEXT://", "").replaceFirst("SSL://", ""))
+                .sorted()
+                .collect(Collectors.joining(","));
+
+
 
             final Set<KafkaPath> globalStoreTopics = topologyDescription.globalStores().stream()
                 .flatMap(gs -> gs.source().topicSet().stream())
