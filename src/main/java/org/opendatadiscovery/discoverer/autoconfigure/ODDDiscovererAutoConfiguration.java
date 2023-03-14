@@ -20,6 +20,8 @@ import org.springframework.boot.info.GitProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.kafka.annotation.KafkaBootstrapConfiguration;
+import org.springframework.kafka.annotation.KafkaStreamsDefaultConfiguration;
 import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
 import org.springframework.kafka.config.StreamsBuilderFactoryBean;
 
@@ -28,7 +30,11 @@ import java.util.List;
 @Configuration
 @EnableConfigurationProperties(ODDDiscovererProperties.class)
 @ConditionalOnProperty(value = "opendatadiscovery.enabled", havingValue = "true")
-@AutoConfigureAfter(ProjectInfoAutoConfiguration.class)
+@AutoConfigureAfter({
+    ProjectInfoAutoConfiguration.class,
+    KafkaStreamsDefaultConfiguration.class,
+    KafkaBootstrapConfiguration.class
+})
 public class ODDDiscovererAutoConfiguration {
     @Bean
     public OpenDataDiscoveryRegister register(
