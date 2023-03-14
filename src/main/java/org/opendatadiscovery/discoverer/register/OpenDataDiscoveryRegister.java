@@ -17,6 +17,7 @@ import org.opendatadiscovery.discoverer.autoconfigure.ODDDiscovererProperties;
 import org.opendatadiscovery.discoverer.model.Paths;
 import org.opendatadiscovery.oddrn.model.NamedMicroservicePath;
 import org.opendatadiscovery.oddrn.model.OddrnPath;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
@@ -31,7 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class OpenDataDiscoveryRegister implements ApplicationListener<ContextRefreshedEvent> {
+public class OpenDataDiscoveryRegister implements ApplicationListener<ApplicationReadyEvent> {
     private static final Log LOG = LogFactory.getLog(OpenDataDiscoveryRegister.class);
 
     private final List<MetadataDiscoverer> metadataDiscoverers;
@@ -51,7 +52,7 @@ public class OpenDataDiscoveryRegister implements ApplicationListener<ContextRef
     }
 
     @Override
-    public void onApplicationEvent(final ContextRefreshedEvent event) {
+    public void onApplicationEvent(final ApplicationReadyEvent event) {
         if (!validateProperties(oddProperties)) {
             return;
         }
