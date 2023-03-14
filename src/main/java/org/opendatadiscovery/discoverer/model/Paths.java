@@ -2,16 +2,22 @@ package org.opendatadiscovery.discoverer.model;
 
 import org.opendatadiscovery.oddrn.model.OddrnPath;
 
-import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 public class Paths {
-    private final List<? extends OddrnPath> inputs;
-    private final List<? extends OddrnPath> outputs;
+    private final Set<? extends OddrnPath> inputs;
+    private final Set<? extends OddrnPath> outputs;
 
-    public Paths(final List<? extends OddrnPath> inputs, final List<? extends OddrnPath> outputs) {
+    public Paths(final Collection<? extends OddrnPath> inputs, final Collection<? extends OddrnPath> outputs) {
+        this.inputs = new HashSet<>(inputs);
+        this.outputs = new HashSet<>(outputs);
+    }
+
+    public Paths(final Set<? extends OddrnPath> inputs, final Set<? extends OddrnPath> outputs) {
         this.inputs = inputs;
         this.outputs = outputs;
     }
@@ -34,14 +40,18 @@ public class Paths {
             }
         }
 
-        return new Paths(new ArrayList<>(inputs), new ArrayList<>(outputs));
+        return new Paths(inputs, outputs);
     }
 
-    public List<? extends OddrnPath> getInputs() {
+    public static Paths empty() {
+        return new Paths(Collections.emptySet(), Collections.emptySet());
+    }
+
+    public Set<? extends OddrnPath> getInputs() {
         return inputs;
     }
 
-    public List<? extends OddrnPath> getOutputs() {
+    public Set<? extends OddrnPath> getOutputs() {
         return outputs;
     }
 }

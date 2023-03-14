@@ -20,11 +20,13 @@ import org.opendatadiscovery.oddrn.model.OddrnPath;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -54,14 +56,10 @@ public class OpenDataDiscoveryRegister implements ApplicationListener<ContextRef
             return;
         }
 
-        final Map<String, Object> metadata = metadataDiscoverers.stream()
-            .flatMap(d -> d.metadata().entrySet().stream())
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (v1, v2) -> v1));
-
         final Paths paths = extractPaths();
 
         final DataEntity dataEntity = new DataEntity()
-            .metadata(Collections.singletonList(new MetadataExtension().metadata(metadata)))
+            .metadata(Collections.singletonList(new MetadataExtension().metadata(extractMetadata())))
             .oddrn(NamedMicroservicePath.builder()
                 .name(String.format("%s/%s", oddProperties.getEnvironment(), context.getId()))
                 .build()
@@ -98,16 +96,45 @@ public class OpenDataDiscoveryRegister implements ApplicationListener<ContextRef
     }
 
     private Paths extractPaths() {
-        final List<Paths> paths = new ArrayList<>();
+        if (pathDiscoverers.isEmpty()) {
+            return Paths.empty();
+        }
+
+        final List<Paths> total = new ArrayList<>();
         for (final PathDiscoverer pathDiscoverer : pathDiscoverers) {
             try {
-                paths.add(pathDiscoverer.discover());
+                final Paths paths = pathDiscoverer.discover();
+                if (paths != null) {
+                    total.add(paths);
+                }
+
+                total.add(pathDiscoverer.discover());
             } catch (final Throwable t) {
                 LOG.error(String.format("Couldn't extract paths using %s", pathDiscoverer.getClass().getName()), t);
             }
         }
 
-        return Paths.merge(paths);
+        return Paths.merge(total);
+    }
+
+    private Map<String, Object> extractMetadata() {
+        if (metadataDiscoverers.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        final Map<String, Object> total = new HashMap<>();
+        for (final MetadataDiscoverer discoverer : metadataDiscoverers) {
+            try {
+                final Map<String, Object> metadata = discoverer.metadata();
+                if (!CollectionUtils.isEmpty(metadata)) {
+                    total.putAll(metadata);
+                }
+            } catch (final Throwable t) {
+                LOG.error(String.format("Couldn't extract metadata using %s", discoverer.getClass().getName()), t);
+            }
+        }
+
+        return total;
     }
 
     private boolean validateProperties(final ODDDiscovererProperties oddProperties) {

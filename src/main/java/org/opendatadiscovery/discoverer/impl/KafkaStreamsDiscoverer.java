@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -50,20 +51,23 @@ public class KafkaStreamsDiscoverer implements PathDiscoverer {
             final String cluster = factoryBean.getStreamsConfiguration()
                 .getProperty(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG);
 
-            final List<KafkaPath> globalStoreTopics = topologyDescription.globalStores().stream()
+            final Set<KafkaPath> globalStoreTopics = topologyDescription.globalStores().stream()
                 .flatMap(gs -> gs.source().topicSet().stream())
                 .distinct()
                 .map(topic -> buildKafkaPath(cluster, topic))
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
 
-            paths.add(new Paths(globalStoreTopics, Collections.emptyList()));
+            paths.add(new Paths(globalStoreTopics, Collections.emptySet()));
 
-            final Map<TopologyNodeType, List<KafkaPath>> map = topologyDescription.subtopologies().stream()
+            final Map<TopologyNodeType, Set<KafkaPath>> map = topologyDescription.subtopologies().stream()
                 .flatMap(subtopology -> subtopology.nodes().stream())
                 .flatMap(node -> extractNodes(node, cluster))
-                .collect(groupingBy(Map.Entry::getKey, mapping(Map.Entry::getValue, Collectors.toList())));
+                .collect(groupingBy(Map.Entry::getKey, mapping(Map.Entry::getValue, Collectors.toSet())));
 
-            paths.add(new Paths(map.get(TopologyNodeType.INPUT), map.get(TopologyNodeType.OUTPUT)));
+            paths.add(new Paths(
+                map.getOrDefault(TopologyNodeType.INPUT, Collections.emptySet()),
+                map.getOrDefault(TopologyNodeType.OUTPUT, Collections.emptySet())
+            ));
         }
 
         return Paths.merge(paths);
@@ -88,7 +92,6 @@ public class KafkaStreamsDiscoverer implements PathDiscoverer {
         }
 
         return Stream.empty();
-
     }
 
     private KafkaPath buildKafkaPath(final String cluster, final String topic) {
