@@ -13,6 +13,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.info.ProjectInfoAutoConfiguration;
+import org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.info.BuildProperties;
@@ -20,8 +21,6 @@ import org.springframework.boot.info.GitProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.kafka.annotation.KafkaBootstrapConfiguration;
-import org.springframework.kafka.annotation.KafkaStreamsDefaultConfiguration;
 import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
 import org.springframework.kafka.config.StreamsBuilderFactoryBean;
 
@@ -32,8 +31,7 @@ import java.util.List;
 @ConditionalOnProperty(value = "opendatadiscovery.enabled", havingValue = "true")
 @AutoConfigureAfter({
     ProjectInfoAutoConfiguration.class,
-    KafkaStreamsDefaultConfiguration.class,
-    KafkaBootstrapConfiguration.class
+    KafkaAutoConfiguration.class
 })
 public class ODDDiscovererAutoConfiguration {
     @Bean
