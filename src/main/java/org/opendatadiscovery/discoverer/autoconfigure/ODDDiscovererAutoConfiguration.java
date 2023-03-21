@@ -4,11 +4,13 @@ import net.devh.boot.grpc.client.autoconfigure.GrpcClientAutoConfiguration;
 import net.devh.boot.grpc.client.config.GrpcChannelsProperties;
 import net.devh.boot.grpc.server.service.GrpcServiceDiscoverer;
 import org.apache.kafka.streams.StreamsBuilder;
+import org.opendatadiscovery.discoverer.AdditionalEntitiesDiscoverer;
 import org.opendatadiscovery.discoverer.MetadataDiscoverer;
 import org.opendatadiscovery.discoverer.PathDiscoverer;
 import org.opendatadiscovery.discoverer.impl.BuildInfoDiscoverer;
 import org.opendatadiscovery.discoverer.impl.GitInfoDiscoverer;
 import org.opendatadiscovery.discoverer.impl.GrpcClientPathDiscoverer;
+import org.opendatadiscovery.discoverer.impl.GrpcServerAdditionalEntitiesDiscoverer;
 import org.opendatadiscovery.discoverer.impl.GrpcServerPathDiscoverer;
 import org.opendatadiscovery.discoverer.impl.KafkaListenerDiscoverer;
 import org.opendatadiscovery.discoverer.impl.KafkaStreamsDiscoverer;
@@ -44,10 +46,17 @@ public class ODDDiscovererAutoConfiguration {
     public OpenDataDiscoveryRegistrar register(
         final List<MetadataDiscoverer> metadataDiscoverers,
         final List<PathDiscoverer> pathDiscoverers,
+        final List<AdditionalEntitiesDiscoverer> additionalEntitiesDiscoverers,
         final ApplicationContext context,
         final ODDDiscovererProperties properties
     ) {
-        return new OpenDataDiscoveryRegistrar(metadataDiscoverers, pathDiscoverers, context, properties);
+        return new OpenDataDiscoveryRegistrar(
+            metadataDiscoverers,
+            pathDiscoverers,
+            additionalEntitiesDiscoverers,
+            context,
+            properties
+        );
     }
 
     @Bean
@@ -65,10 +74,23 @@ public class ODDDiscovererAutoConfiguration {
     @ConditionalOnBean(GrpcServiceDiscoverer.class)
     @ConditionalOnProperty(value = "opendatadiscovery.bind.hostname")
     static class GrpcServerDiscovererConfiguration {
+        private final GrpcServiceDiscoverer grpcServiceDiscoverer;
+        private final String bindHostname;
+
+        GrpcServerDiscovererConfiguration(final GrpcServiceDiscoverer grpcServiceDiscoverer,
+                                          final ODDDiscovererProperties oddDiscovererProperties) {
+            this.grpcServiceDiscoverer = grpcServiceDiscoverer;
+            this.bindHostname = oddDiscovererProperties.getBind().getHostname();
+        }
+
         @Bean
-        public PathDiscoverer grpcServerPathDiscoverer(final GrpcServiceDiscoverer grpcServiceDiscoverer,
-                                                       final ODDDiscovererProperties oddDiscovererProperties) {
-            return new GrpcServerPathDiscoverer(grpcServiceDiscoverer, oddDiscovererProperties.getBind().getHostname());
+        public PathDiscoverer grpcServerPathDiscoverer() {
+            return new GrpcServerPathDiscoverer(grpcServiceDiscoverer, bindHostname);
+        }
+
+        @Bean
+        public AdditionalEntitiesDiscoverer grpcServerAdditionalEntitiesDiscoverer() {
+            return new GrpcServerAdditionalEntitiesDiscoverer(grpcServiceDiscoverer, bindHostname);
         }
     }
 
