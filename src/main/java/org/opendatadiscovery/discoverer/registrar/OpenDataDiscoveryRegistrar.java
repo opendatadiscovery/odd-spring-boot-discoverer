@@ -1,4 +1,4 @@
-package org.opendatadiscovery.discoverer.register;
+package org.opendatadiscovery.discoverer.registrar;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -31,8 +31,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class OpenDataDiscoveryRegister implements ApplicationListener<ApplicationReadyEvent> {
-    private static final Log LOG = LogFactory.getLog(OpenDataDiscoveryRegister.class);
+public class OpenDataDiscoveryRegistrar implements ApplicationListener<ApplicationReadyEvent> {
+    private static final Log LOG = LogFactory.getLog(OpenDataDiscoveryRegistrar.class);
 
     private final List<MetadataDiscoverer> metadataDiscoverers;
     private final List<PathDiscoverer> pathDiscoverers;
@@ -40,10 +40,10 @@ public class OpenDataDiscoveryRegister implements ApplicationListener<Applicatio
     private final ApplicationContext context;
     private final ODDDiscovererProperties oddProperties;
 
-    public OpenDataDiscoveryRegister(final List<MetadataDiscoverer> metadataDiscoverers,
-                                     final List<PathDiscoverer> pathDiscoverers,
-                                     final ApplicationContext applicationContext,
-                                     final ODDDiscovererProperties properties) {
+    public OpenDataDiscoveryRegistrar(final List<MetadataDiscoverer> metadataDiscoverers,
+                                      final List<PathDiscoverer> pathDiscoverers,
+                                      final ApplicationContext applicationContext,
+                                      final ODDDiscovererProperties properties) {
         this.metadataDiscoverers = metadataDiscoverers;
         this.pathDiscoverers = pathDiscoverers;
         this.context = applicationContext;
@@ -107,8 +107,6 @@ public class OpenDataDiscoveryRegister implements ApplicationListener<Applicatio
                 if (paths != null) {
                     total.add(paths);
                 }
-
-                total.add(pathDiscoverer.discover());
             } catch (final Throwable t) {
                 LOG.error(String.format("Couldn't extract paths using %s", pathDiscoverer.getClass().getName()), t);
             }

@@ -1,13 +1,19 @@
 package org.opendatadiscovery.discoverer.autoconfigure;
 
+import net.devh.boot.grpc.client.autoconfigure.GrpcClientAutoConfiguration;
+import net.devh.boot.grpc.client.config.GrpcChannelsProperties;
+import net.devh.boot.grpc.server.service.GrpcServiceDiscoverer;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.opendatadiscovery.discoverer.MetadataDiscoverer;
 import org.opendatadiscovery.discoverer.PathDiscoverer;
 import org.opendatadiscovery.discoverer.impl.BuildInfoDiscoverer;
 import org.opendatadiscovery.discoverer.impl.GitInfoDiscoverer;
+import org.opendatadiscovery.discoverer.impl.GrpcClientPathDiscoverer;
+import org.opendatadiscovery.discoverer.impl.GrpcServerPathDiscoverer;
 import org.opendatadiscovery.discoverer.impl.KafkaListenerDiscoverer;
 import org.opendatadiscovery.discoverer.impl.KafkaStreamsDiscoverer;
-import org.opendatadiscovery.discoverer.register.OpenDataDiscoveryRegister;
+import org.opendatadiscovery.discoverer.model.grpc.GrpcClientDescriptorRegistry;
+import org.opendatadiscovery.discoverer.registrar.OpenDataDiscoveryRegistrar;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -35,13 +41,13 @@ import java.util.List;
 })
 public class ODDDiscovererAutoConfiguration {
     @Bean
-    public OpenDataDiscoveryRegister register(
+    public OpenDataDiscoveryRegistrar register(
         final List<MetadataDiscoverer> metadataDiscoverers,
         final List<PathDiscoverer> pathDiscoverers,
         final ApplicationContext context,
         final ODDDiscovererProperties properties
     ) {
-        return new OpenDataDiscoveryRegister(metadataDiscoverers, pathDiscoverers, context, properties);
+        return new OpenDataDiscoveryRegistrar(metadataDiscoverers, pathDiscoverers, context, properties);
     }
 
     @Bean
@@ -54,6 +60,26 @@ public class ODDDiscovererAutoConfiguration {
     @ConditionalOnBean(GitProperties.class)
     public MetadataDiscoverer gitInfo(final GitProperties gitProperties) {
         return new GitInfoDiscoverer(gitProperties);
+    }
+
+    @ConditionalOnBean(GrpcServiceDiscoverer.class)
+    @ConditionalOnProperty(value = "opendatadiscovery.bind.hostname")
+    static class GrpcServerDiscovererConfiguration {
+        @Bean
+        public PathDiscoverer grpcServerPathDiscoverer(final GrpcServiceDiscoverer grpcServiceDiscoverer,
+                                                       final ODDDiscovererProperties oddDiscovererProperties) {
+            return new GrpcServerPathDiscoverer(grpcServiceDiscoverer, oddDiscovererProperties.getBind().getHostname());
+        }
+    }
+
+    @ConditionalOnBean(GrpcClientDescriptorRegistry.class)
+    @ConditionalOnClass(GrpcClientAutoConfiguration.class)
+    static class GrpcDiscovererConfiguration {
+        @Bean
+        public PathDiscoverer grpcClientPathDiscoverer(final GrpcChannelsProperties channelsProperties,
+                                                       final GrpcClientDescriptorRegistry clientDescriptorRegistry) {
+            return new GrpcClientPathDiscoverer(channelsProperties, clientDescriptorRegistry);
+        }
     }
 
     @ConditionalOnBean(KafkaListenerEndpointRegistry.class)

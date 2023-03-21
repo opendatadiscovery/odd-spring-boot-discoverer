@@ -8,6 +8,7 @@ public class ODDDiscovererProperties {
     private String url;
     private String dataSourceOddrn;
     private String environment;
+    private Bind bind;
 
     public boolean isEnabled() {
         return enabled;
@@ -39,5 +40,25 @@ public class ODDDiscovererProperties {
 
     public void setEnvironment(final String environment) {
         this.environment = environment;
+    }
+
+    public Bind getBind() {
+        return bind;
+    }
+
+    public void setBind(final Bind bind) {
+        this.bind = bind;
+    }
+
+    public static class Bind {
+        private String hostname;
+
+        public String getHostname() {
+            return hostname;
+        }
+
+        public void setHostname(final String hostname) {
+            this.hostname = hostname;
+        }
     }
 }
