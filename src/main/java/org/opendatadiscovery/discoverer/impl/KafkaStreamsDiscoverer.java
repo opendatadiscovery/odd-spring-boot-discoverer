@@ -61,8 +61,6 @@ public class KafkaStreamsDiscoverer implements PathDiscoverer {
                 .sorted()
                 .collect(Collectors.joining(","));
 
-
-
             final Set<KafkaPath> globalStoreTopics = topologyDescription.globalStores().stream()
                 .flatMap(gs -> gs.source().topicSet().stream())
                 .distinct()

@@ -1,4 +1,4 @@
-package org.opendatadiscovery.discoverer.register;
+package org.opendatadiscovery.discoverer.registrar;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -11,6 +11,7 @@ import org.opendatadiscovery.client.model.DataEntityList;
 import org.opendatadiscovery.client.model.DataEntityType;
 import org.opendatadiscovery.client.model.DataTransformer;
 import org.opendatadiscovery.client.model.MetadataExtension;
+import org.opendatadiscovery.discoverer.AdditionalEntitiesDiscoverer;
 import org.opendatadiscovery.discoverer.MetadataDiscoverer;
 import org.opendatadiscovery.discoverer.PathDiscoverer;
 import org.opendatadiscovery.discoverer.autoconfigure.ODDDiscovererProperties;
@@ -25,27 +26,33 @@ import org.springframework.util.StringUtils;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class OpenDataDiscoveryRegister implements ApplicationListener<ApplicationReadyEvent> {
-    private static final Log LOG = LogFactory.getLog(OpenDataDiscoveryRegister.class);
+import static java.util.Collections.emptyList;
+
+public class OpenDataDiscoveryRegistrar implements ApplicationListener<ApplicationReadyEvent> {
+    private static final Log LOG = LogFactory.getLog(OpenDataDiscoveryRegistrar.class);
 
     private final List<MetadataDiscoverer> metadataDiscoverers;
     private final List<PathDiscoverer> pathDiscoverers;
+    private final List<AdditionalEntitiesDiscoverer> additionalEntitiesDiscoverers;
 
     private final ApplicationContext context;
     private final ODDDiscovererProperties oddProperties;
 
-    public OpenDataDiscoveryRegister(final List<MetadataDiscoverer> metadataDiscoverers,
-                                     final List<PathDiscoverer> pathDiscoverers,
-                                     final ApplicationContext applicationContext,
-                                     final ODDDiscovererProperties properties) {
+    public OpenDataDiscoveryRegistrar(final List<MetadataDiscoverer> metadataDiscoverers,
+                                      final List<PathDiscoverer> pathDiscoverers,
+                                      final List<AdditionalEntitiesDiscoverer> additionalEntitiesDiscoverers,
+                                      final ApplicationContext applicationContext,
+                                      final ODDDiscovererProperties properties) {
         this.metadataDiscoverers = metadataDiscoverers;
         this.pathDiscoverers = pathDiscoverers;
+        this.additionalEntitiesDiscoverers = additionalEntitiesDiscoverers;
         this.context = applicationContext;
         this.oddProperties = properties;
     }
@@ -73,8 +80,11 @@ public class OpenDataDiscoveryRegister implements ApplicationListener<Applicatio
                     .outputs(paths.getOutputs().stream().map(OddrnPath::oddrn).collect(Collectors.toList()))
             );
 
+        final List<DataEntity> dataEntities = new ArrayList<>(extractAdditionalEntities());
+        dataEntities.add(dataEntity);
+
         final DataEntityList dataEntityList = new DataEntityList()
-            .items(Collections.singletonList(dataEntity))
+            .items(dataEntities)
             .dataSourceOddrn(oddProperties.getDataSourceOddrn());
 
         LOG.debug("Payload to send: " + dataEntityList);
@@ -95,6 +105,33 @@ public class OpenDataDiscoveryRegister implements ApplicationListener<Applicatio
         }
     }
 
+    private Collection<DataEntity> extractAdditionalEntities() {
+        if (additionalEntitiesDiscoverers.isEmpty()) {
+            return emptyList();
+        }
+
+        final Map<String, DataEntity> total = new HashMap<>();
+        for (final AdditionalEntitiesDiscoverer additionalEntitiesDiscoverer : additionalEntitiesDiscoverers) {
+            try {
+                final List<DataEntity> entities = additionalEntitiesDiscoverer.discover();
+                if (!CollectionUtils.isEmpty(entities)) {
+                    for (final DataEntity entity : entities) {
+                        final DataEntity prev = total.put(entity.getOddrn(), entity);
+                        if (prev != null) {
+                            LOG.warn(String.format("ODDRN %s has collisions: %n Previous: %n %s %n Current: %n %s",
+                                entity.getOddrn(), prev, entity));
+                        }
+                    }
+                }
+            } catch (final Exception e) {
+                LOG.error(String.format("Couldn't extract additional entities using %s",
+                    additionalEntitiesDiscoverer.getClass().getName()), e);
+            }
+        }
+
+        return total.values();
+    }
+
     private Paths extractPaths() {
         if (pathDiscoverers.isEmpty()) {
             return Paths.empty();
@@ -107,10 +144,8 @@ public class OpenDataDiscoveryRegister implements ApplicationListener<Applicatio
                 if (paths != null) {
                     total.add(paths);
                 }
-
-                total.add(pathDiscoverer.discover());
-            } catch (final Throwable t) {
-                LOG.error(String.format("Couldn't extract paths using %s", pathDiscoverer.getClass().getName()), t);
+            } catch (final Exception e) {
+                LOG.error(String.format("Couldn't extract paths using %s", pathDiscoverer.getClass().getName()), e);
             }
         }
 
@@ -129,8 +164,8 @@ public class OpenDataDiscoveryRegister implements ApplicationListener<Applicatio
                 if (!CollectionUtils.isEmpty(metadata)) {
                     total.putAll(metadata);
                 }
-            } catch (final Throwable t) {
-                LOG.error(String.format("Couldn't extract metadata using %s", discoverer.getClass().getName()), t);
+            } catch (final Exception e) {
+                LOG.error(String.format("Couldn't extract metadata using %s", discoverer.getClass().getName()), e);
             }
         }
 
