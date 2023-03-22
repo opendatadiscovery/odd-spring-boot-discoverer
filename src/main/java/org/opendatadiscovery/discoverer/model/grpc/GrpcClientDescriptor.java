@@ -2,9 +2,9 @@ package org.opendatadiscovery.discoverer.model.grpc;
 
 import io.grpc.MethodDescriptor;
 import io.grpc.ServiceDescriptor;
-import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -16,18 +16,12 @@ public class GrpcClientDescriptor {
     private final ServiceDescriptor serviceDescriptor;
     private final Map<String, MethodDescriptor<?, ?>> whitelistedMethodDescriptors;
 
-    public GrpcClientDescriptor(final String clientName, final ServiceDescriptor serviceDescriptor) {
-        this(clientName, serviceDescriptor, null);
-    }
-
     public GrpcClientDescriptor(final String clientName,
                                 final ServiceDescriptor serviceDescriptor,
                                 final Collection<MethodDescriptor<?, ?>> whitelistedMethodDescriptors) {
         this.serviceDescriptor = requireNonNull(serviceDescriptor, "Service descriptor cannot be null");
         this.clientName = requireNonNull(clientName, "Client name cannot be null");
-        this.whitelistedMethodDescriptors = CollectionUtils.emptyIfNull(whitelistedMethodDescriptors)
-            .stream()
-            .collect(Collectors.toMap(MethodDescriptor::getBareMethodName, identity()));
+        this.whitelistedMethodDescriptors = prepareMethodDescriptors(whitelistedMethodDescriptors);
     }
 
     public boolean isMethodWhitelisted(final String methodBareName) {
@@ -44,5 +38,17 @@ public class GrpcClientDescriptor {
 
     public String getClientName() {
         return clientName;
+    }
+
+    private Map<String, MethodDescriptor<?, ?>> prepareMethodDescriptors(
+        final Collection<MethodDescriptor<?, ?>> whitelistedMethodDescriptors
+    ) {
+        if (whitelistedMethodDescriptors == null || whitelistedMethodDescriptors.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        return whitelistedMethodDescriptors
+            .stream()
+            .collect(Collectors.toMap(MethodDescriptor::getBareMethodName, identity()));
     }
 }

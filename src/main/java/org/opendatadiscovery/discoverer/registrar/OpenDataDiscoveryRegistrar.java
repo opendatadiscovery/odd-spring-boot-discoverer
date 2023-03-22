@@ -1,8 +1,5 @@
 package org.opendatadiscovery.discoverer.registrar;
 
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.collections4.ListUtils;
-import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.opendatadiscovery.client.ApiClient;
@@ -24,6 +21,7 @@ import org.opendatadiscovery.oddrn.model.OddrnPath;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.net.URI;
@@ -116,7 +114,7 @@ public class OpenDataDiscoveryRegistrar implements ApplicationListener<Applicati
         for (final AdditionalEntitiesDiscoverer additionalEntitiesDiscoverer : additionalEntitiesDiscoverers) {
             try {
                 final List<DataEntity> entities = additionalEntitiesDiscoverer.discover();
-                if (CollectionUtils.isNotEmpty(entities)) {
+                if (!CollectionUtils.isEmpty(entities)) {
                     for (final DataEntity entity : entities) {
                         final DataEntity prev = total.put(entity.getOddrn(), entity);
                         if (prev != null) {
@@ -125,9 +123,9 @@ public class OpenDataDiscoveryRegistrar implements ApplicationListener<Applicati
                         }
                     }
                 }
-            } catch (final Throwable t) {
+            } catch (final Exception e) {
                 LOG.error(String.format("Couldn't extract additional entities using %s",
-                    additionalEntitiesDiscoverer.getClass().getName()), t);
+                    additionalEntitiesDiscoverer.getClass().getName()), e);
             }
         }
 
@@ -146,8 +144,8 @@ public class OpenDataDiscoveryRegistrar implements ApplicationListener<Applicati
                 if (paths != null) {
                     total.add(paths);
                 }
-            } catch (final Throwable t) {
-                LOG.error(String.format("Couldn't extract paths using %s", pathDiscoverer.getClass().getName()), t);
+            } catch (final Exception e) {
+                LOG.error(String.format("Couldn't extract paths using %s", pathDiscoverer.getClass().getName()), e);
             }
         }
 
@@ -163,11 +161,11 @@ public class OpenDataDiscoveryRegistrar implements ApplicationListener<Applicati
         for (final MetadataDiscoverer discoverer : metadataDiscoverers) {
             try {
                 final Map<String, Object> metadata = discoverer.metadata();
-                if (MapUtils.isNotEmpty(metadata)) {
+                if (!CollectionUtils.isEmpty(metadata)) {
                     total.putAll(metadata);
                 }
-            } catch (final Throwable t) {
-                LOG.error(String.format("Couldn't extract metadata using %s", discoverer.getClass().getName()), t);
+            } catch (final Exception e) {
+                LOG.error(String.format("Couldn't extract metadata using %s", discoverer.getClass().getName()), e);
             }
         }
 
