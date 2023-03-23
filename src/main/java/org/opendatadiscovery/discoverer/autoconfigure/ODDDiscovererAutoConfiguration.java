@@ -14,6 +14,7 @@ import org.opendatadiscovery.discoverer.impl.GrpcServerAdditionalEntitiesDiscove
 import org.opendatadiscovery.discoverer.impl.GrpcServerPathDiscoverer;
 import org.opendatadiscovery.discoverer.impl.KafkaListenerDiscoverer;
 import org.opendatadiscovery.discoverer.impl.KafkaStreamsDiscoverer;
+import org.opendatadiscovery.discoverer.impl.filter.GrpcServerServiceEndpointsFilter;
 import org.opendatadiscovery.discoverer.model.grpc.GrpcClientDescriptorRegistry;
 import org.opendatadiscovery.discoverer.registrar.OpenDataDiscoveryRegistrar;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
@@ -76,21 +77,23 @@ public class ODDDiscovererAutoConfiguration {
     static class GrpcServerDiscovererConfiguration {
         private final GrpcServiceDiscoverer grpcServiceDiscoverer;
         private final String bindHostname;
+        private final GrpcServerServiceEndpointsFilter endpointsFilter;
 
         GrpcServerDiscovererConfiguration(final GrpcServiceDiscoverer grpcServiceDiscoverer,
                                           final ODDDiscovererProperties oddDiscovererProperties) {
             this.grpcServiceDiscoverer = grpcServiceDiscoverer;
             this.bindHostname = oddDiscovererProperties.getBind().getHostname();
+            this.endpointsFilter = new GrpcServerServiceEndpointsFilter();
         }
 
         @Bean
         public PathDiscoverer grpcServerPathDiscoverer() {
-            return new GrpcServerPathDiscoverer(grpcServiceDiscoverer, bindHostname);
+            return new GrpcServerPathDiscoverer(grpcServiceDiscoverer, endpointsFilter, bindHostname);
         }
 
         @Bean
         public AdditionalEntitiesDiscoverer grpcServerAdditionalEntitiesDiscoverer() {
-            return new GrpcServerAdditionalEntitiesDiscoverer(grpcServiceDiscoverer, bindHostname);
+            return new GrpcServerAdditionalEntitiesDiscoverer(grpcServiceDiscoverer, endpointsFilter, bindHostname);
         }
     }
 

@@ -9,6 +9,7 @@ import org.opendatadiscovery.client.model.DataEntityGroup;
 import org.opendatadiscovery.client.model.DataEntityType;
 import org.opendatadiscovery.client.model.DataInput;
 import org.opendatadiscovery.discoverer.AdditionalEntitiesDiscoverer;
+import org.opendatadiscovery.discoverer.impl.filter.GrpcServerServiceEndpointsFilter;
 import org.opendatadiscovery.oddrn.model.GrpcServicePath;
 import org.opendatadiscovery.oddrn.model.OddrnPath;
 
@@ -18,11 +19,14 @@ import java.util.stream.Collectors;
 
 public class GrpcServerAdditionalEntitiesDiscoverer implements AdditionalEntitiesDiscoverer {
     private final GrpcServiceDiscoverer grpcServiceDiscoverer;
+    private final GrpcServerServiceEndpointsFilter endpointsFilter;
     private final String serviceHost;
 
     public GrpcServerAdditionalEntitiesDiscoverer(final GrpcServiceDiscoverer grpcServiceDiscoverer,
+                                                  final GrpcServerServiceEndpointsFilter endpointsFilter,
                                                   final String serviceHost) {
         this.grpcServiceDiscoverer = grpcServiceDiscoverer;
+        this.endpointsFilter = endpointsFilter;
         this.serviceHost = serviceHost;
     }
 
@@ -31,8 +35,12 @@ public class GrpcServerAdditionalEntitiesDiscoverer implements AdditionalEntitie
         final List<DataEntity> dataEntities = new ArrayList<>();
 
         for (final GrpcServiceDefinition grpcService : grpcServiceDiscoverer.findGrpcServices()) {
-            final List<DataEntity> serviceDataInputs = new ArrayList<>();
+            if (!endpointsFilter.test(grpcService)) {
+                continue;
+            }
+
             final ServiceDescriptor serviceDescriptor = grpcService.getDefinition().getServiceDescriptor();
+            final List<DataEntity> serviceDataInputs = new ArrayList<>();
             final GrpcServicePath servicePath = GrpcServicePath.builder()
                 .host(serviceHost)
                 .service(serviceDescriptor.getName())
