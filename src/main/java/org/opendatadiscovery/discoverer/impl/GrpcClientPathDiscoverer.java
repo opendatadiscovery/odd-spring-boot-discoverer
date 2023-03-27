@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
@@ -61,8 +62,6 @@ public class GrpcClientPathDiscoverer implements PathDiscoverer {
             final String clientAddress;
             try {
                 clientAddress = extractAddressForClient(clientDescriptor.getClientName()).get();
-            } catch (final InterruptedException e) {
-                throw new IllegalStateException(e);
             } catch (final Exception e) {
                 LOG.error(e.getMessage(), e);
                 continue;
@@ -82,7 +81,7 @@ public class GrpcClientPathDiscoverer implements PathDiscoverer {
         return new Paths(Collections.emptySet(), grpcServicePaths);
     }
 
-    private Future<String> extractAddressForClient(final String clientName) {
+    private CompletableFuture<String> extractAddressForClient(final String clientName) {
         final GrpcChannelProperties clientChannel = channelsProperties.getChannel(clientName);
 
         if (clientChannel == null) {
@@ -98,7 +97,7 @@ public class GrpcClientPathDiscoverer implements PathDiscoverer {
         return resolveURI(clientChannelAddress);
     }
 
-    private Future<String> resolveURI(final URI uri) {
+    private CompletableFuture<String> resolveURI(final URI uri) {
         final CompletableFuture<String> resultFuture = new CompletableFuture<>();
 
         NameResolverRegistry.getDefaultRegistry()
