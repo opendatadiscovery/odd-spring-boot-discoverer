@@ -6,6 +6,7 @@ import org.opendatadiscovery.oddrn.model.KafkaPath;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
 
+import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -25,7 +26,8 @@ public class KafkaListenerDiscoverer implements PathDiscoverer {
     @Override
     public Paths discover() {
         final String cluster = kafkaProperties.getBootstrapServers().stream()
-            .map(s -> s.replaceFirst("PLAINTEXT://", "").replaceFirst("SSL://", ""))
+            .map(server -> URI.create(server).getHost())
+            .distinct()
             .sorted()
             .collect(Collectors.joining(","));
 

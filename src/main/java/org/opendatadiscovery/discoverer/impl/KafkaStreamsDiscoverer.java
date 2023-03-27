@@ -1,5 +1,6 @@
 package org.opendatadiscovery.discoverer.impl;
 
+import java.net.URI;
 import java.util.Arrays;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -57,7 +58,8 @@ public class KafkaStreamsDiscoverer implements PathDiscoverer {
                     clusterConfig instanceof List<?> ? (List<String>) clusterConfig : List.of();
 
             final String cluster = bootstrapServers.stream()
-                .map(s -> s.replaceFirst("PLAINTEXT://", "").replaceFirst("SSL://", ""))
+                .map(server -> URI.create(server).getHost())
+                .distinct()
                 .sorted()
                 .collect(Collectors.joining(","));
 
