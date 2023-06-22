@@ -18,6 +18,9 @@ repositories {
     mavenCentral()
 }
 
+targetCompatibility = '11'
+sourceCompatibility = '11'
+
 dependencies {
     api "org.opendatadiscovery:oddrn-generator-java:0.1.17"
     implementation "org.opendatadiscovery:ingestion-contract-client-native:0.1.23"
